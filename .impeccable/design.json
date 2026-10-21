@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T00:36:11.4668356+05:30",
+  "title": "Design System: DisasterOS",
+  "extensions": {
+    "colorMeta": {
+      "canvas": { "role": "neutral", "displayName": "Control-Room Canvas", "canonical": "#0b1120", "tonalRamp": ["oklch(15% 0.03 257)", "oklch(25% 0.03 257)", "oklch(35% 0.03 257)", "oklch(47% 0.03 257)", "oklch(59% 0.03 257)", "oklch(71% 0.03 257)", "oklch(83% 0.03 257)", "oklch(95% 0.03 257)"] },
+      "surface": { "role": "neutral", "displayName": "Instrument Surface", "canonical": "#091315", "tonalRamp": ["oklch(15% 0.022 202)", "oklch(25% 0.022 202)", "oklch(35% 0.022 202)", "oklch(47% 0.022 202)", "oklch(59% 0.022 202)", "oklch(71% 0.022 202)", "oklch(83% 0.022 202)", "oklch(95% 0.022 202)"] },
+      "surface-raised": { "role": "neutral", "displayName": "Raised Instrument Surface", "canonical": "#0d1a1d", "tonalRamp": ["oklch(15% 0.024 203)", "oklch(25% 0.024 203)", "oklch(35% 0.024 203)", "oklch(47% 0.024 203)", "oklch(59% 0.024 203)", "oklch(71% 0.024 203)", "oklch(83% 0.024 203)", "oklch(95% 0.024 203)"] },
+      "surface-hover": { "role": "neutral", "displayName": "Hover Surface", "canonical": "#112226", "tonalRamp": ["oklch(15% 0.03 203)", "oklch(25% 0.03 203)", "oklch(35% 0.03 203)", "oklch(47% 0.03 203)", "oklch(59% 0.03 203)", "oklch(71% 0.03 203)", "oklch(83% 0.03 203)", "oklch(95% 0.03 203)"] },
+      "control-surface": { "role": "neutral", "displayName": "Control Surface", "canonical": "#0e2022", "tonalRamp": ["oklch(15% 0.03 199)", "oklch(25% 0.03 199)", "oklch(35% 0.03 199)", "oklch(47% 0.03 199)", "oklch(59% 0.03 199)", "oklch(71% 0.03 199)", "oklch(83% 0.03 199)", "oklch(95% 0.03 199)"] },
+      "line": { "role": "neutral", "displayName": "Structural Line", "canonical": "#1b3437", "tonalRamp": ["oklch(15% 0.028 200)", "oklch(25% 0.028 200)", "oklch(35% 0.028 200)", "oklch(47% 0.028 200)", "oklch(59% 0.028 200)", "oklch(71% 0.028 200)", "oklch(83% 0.028 200)", "oklch(95% 0.028 200)"] },
+      "line-strong": { "role": "neutral", "displayName": "Strong Structural Line", "canonical": "#285055", "tonalRamp": ["oklch(15% 0.042 199)", "oklch(25% 0.042 199)", "oklch(35% 0.042 199)", "oklch(47% 0.042 199)", "oklch(59% 0.042 199)", "oklch(71% 0.042 199)", "oklch(83% 0.042 199)", "oklch(95% 0.042 199)"] },
+      "text": { "role": "neutral", "displayName": "Primary Text", "canonical": "#e6efed", "tonalRamp": ["oklch(15% 0.012 177)", "oklch(25% 0.012 177)", "oklch(35% 0.012 177)", "oklch(47% 0.012 177)", "oklch(59% 0.012 177)", "oklch(71% 0.012 177)", "oklch(83% 0.012 177)", "oklch(95% 0.012 177)"] },
+      "muted": { "role": "neutral", "displayName": "Muted Text", "canonical": "#8da3a0", "tonalRamp": ["oklch(15% 0.02 177)", "oklch(25% 0.02 177)", "oklch(35% 0.02 177)", "oklch(47% 0.02 177)", "oklch(59% 0.02 177)", "oklch(71% 0.02 177)", "oklch(83% 0.02 177)", "oklch(95% 0.02 177)"] },
+      "quiet": { "role": "neutral", "displayName": "Quiet Label", "canonical": "#78908c", "tonalRamp": ["oklch(15% 0.025 174)", "oklch(25% 0.025 174)", "oklch(35% 0.025 174)", "oklch(47% 0.025 174)", "oklch(59% 0.025 174)", "oklch(71% 0.025 174)", "oklch(83% 0.025 174)", "oklch(95% 0.025 174)"] },
+      "resilience-green": { "role": "primary", "displayName": "Resilience Green", "canonical": "#58d39b", "tonalRamp": ["oklch(15% 0.15 158)", "oklch(25% 0.15 158)", "oklch(35% 0.15 158)", "oklch(47% 0.15 158)", "oklch(59% 0.15 158)", "oklch(71% 0.15 158)", "oklch(83% 0.15 158)", "oklch(95% 0.15 158)"] },
+      "resilience-green-hover": { "role": "primary", "displayName": "Resilience Green Hover", "canonical": "#70dfaa", "tonalRamp": ["oklch(15% 0.14 158)", "oklch(25% 0.14 158)", "oklch(35% 0.14 158)", "oklch(47% 0.14 158)", "oklch(59% 0.14 158)", "oklch(71% 0.14 158)", "oklch(83% 0.14 158)", "oklch(95% 0.14 158)"] },
+      "comparative-blue": { "role": "secondary", "displayName": "Comparative Blue", "canonical": "#69aeda", "tonalRamp": ["oklch(15% 0.105 236)", "oklch(25% 0.105 236)", "oklch(35% 0.105 236)", "oklch(47% 0.105 236)", "oklch(59% 0.105 236)", "oklch(71% 0.105 236)", "oklch(83% 0.105 236)", "oklch(95% 0.105 236)"] },
+      "caution-amber": { "role": "tertiary", "displayName": "Caution Amber", "canonical": "#e6ad4b", "tonalRamp": ["oklch(15% 0.14 78)", "oklch(25% 0.14 78)", "oklch(35% 0.14 78)", "oklch(47% 0.14 78)", "oklch(59% 0.14 78)", "oklch(71% 0.14 78)", "oklch(83% 0.14 78)", "oklch(95% 0.14 78)"] },
+      "incident-red": { "role": "tertiary", "displayName": "Incident Red", "canonical": "#e56d72", "tonalRamp": ["oklch(15% 0.155 22)", "oklch(25% 0.155 22)", "oklch(35% 0.155 22)", "oklch(47% 0.155 22)", "oklch(59% 0.155 22)", "oklch(71% 0.155 22)", "oklch(83% 0.155 22)", "oklch(95% 0.155 22)"] },
+      "ink-on-green": { "role": "neutral", "displayName": "Ink on Green", "canonical": "#04100c", "tonalRamp": ["oklch(15% 0.025 160)", "oklch(25% 0.025 160)", "oklch(35% 0.025 160)", "oklch(47% 0.025 160)", "oklch(59% 0.025 160)", "oklch(71% 0.025 160)", "oklch(83% 0.025 160)", "oklch(95% 0.025 160)"] },
+      "success-surface": { "role": "primary", "displayName": "Success Surface", "canonical": "#0b1b17", "tonalRamp": ["oklch(15% 0.035 166)", "oklch(25% 0.035 166)", "oklch(35% 0.035 166)", "oklch(47% 0.035 166)", "oklch(59% 0.035 166)", "oklch(71% 0.035 166)", "oklch(83% 0.035 166)", "oklch(95% 0.035 166)"] },
+      "warning-surface": { "role": "tertiary", "displayName": "Warning Surface", "canonical": "#1c180e", "tonalRamp": ["oklch(15% 0.035 80)", "oklch(25% 0.035 80)", "oklch(35% 0.035 80)", "oklch(47% 0.035 80)", "oklch(59% 0.035 80)", "oklch(71% 0.035 80)", "oklch(83% 0.035 80)", "oklch(95% 0.035 80)"] },
+      "danger-surface": { "role": "tertiary", "displayName": "Danger Surface", "canonical": "#1c1012", "tonalRamp": ["oklch(15% 0.035 20)", "oklch(25% 0.035 20)", "oklch(35% 0.035 20)", "oklch(47% 0.035 20)", "oklch(59% 0.035 20)", "oklch(71% 0.035 20)", "oklch(83% 0.035 20)", "oklch(95% 0.035 20)"] },
+      "telemetry-track": { "role": "neutral", "displayName": "Telemetry Track", "canonical": "#16282b", "tonalRamp": ["oklch(15% 0.026 201)", "oklch(25% 0.026 201)", "oklch(35% 0.026 201)", "oklch(47% 0.026 201)", "oklch(59% 0.026 201)", "oklch(71% 0.026 201)", "oklch(83% 0.026 201)", "oklch(95% 0.026 201)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Console Brand", "purpose": "Product identity in the console header." },
+      "headline": { "displayName": "Section Heading", "purpose": "Primary section headings." },
+      "title": { "displayName": "Operational Title", "purpose": "Recovery-stage values and compact operational titles." },
+      "body": { "displayName": "Operational Body", "purpose": "Status context and explanatory copy." },
+      "label": { "displayName": "Telemetry Label", "purpose": "Small uppercase status, telemetry, and workflow labels." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "telemetry-width", "value": "width 240ms ease-out", "purpose": "Smooth utilization-bar updates between two-second telemetry samples." },
+      { "name": "telemetry-color", "value": "background-color 160ms ease-out", "purpose": "Changes utilization-bar severity without distracting movement." },
+      { "name": "control-state", "value": "border-color 140ms ease, background-color 140ms ease, color 140ms ease", "purpose": "Compact button hover feedback." },
+      { "name": "reduced-motion", "value": "0.01ms", "purpose": "Collapses transitions and animations when the operating system requests reduced motion." }
+    ],
+    "breakpoints": [
+      { "name": "compact-console", "value": "800px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Decisive bounded actions such as stopping an active simulation.",
+      "html": "<button class=\"ds-btn-primary\">STOP ACTIVE SIMULATION</button>",
+      "css": ".ds-btn-primary { min-height: 38px; border: 1px solid var(--green, #58d39b); border-radius: 5px; background: var(--green, #58d39b); color: #04100c; font-family: \"Segoe UI Variable\", \"Segoe UI\", system-ui, sans-serif; font-weight: 720; transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease; } .ds-btn-primary:hover { background: #70dfaa; border-color: #70dfaa; } .ds-btn-primary:focus-visible { outline: 2px solid var(--green, #58d39b); outline-offset: 2px; } .ds-btn-primary:active { background: var(--green, #58d39b); } .ds-btn-primary:disabled { opacity: .45; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Default action treatment for routine operator controls.",
+      "html": "<button class=\"ds-btn-secondary\">RUN BENCHMARK SUITE</button>",
+      "css": ".ds-btn-secondary { min-height: 38px; border: 1px solid var(--line-strong, #285055); border-radius: 5px; background: #0e2022; color: var(--text, #e6efed); font-family: \"Segoe UI Variable\", \"Segoe UI\", system-ui, sans-serif; font-weight: 620; transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease; } .ds-btn-secondary:hover { border-color: var(--green, #58d39b); background: var(--surface-hover, #112226); color: var(--green, #58d39b); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--green, #58d39b); outline-offset: 2px; } .ds-btn-secondary:active { background: var(--surface, #091315); } .ds-btn-secondary:disabled { opacity: .45; }"
+    },
+    {
+      "name": "Status Surface",
+      "kind": "card",
+      "refersTo": "status-surface",
+      "description": "Current risk, monitoring context, and provenance in one bounded row.",
+      "html": "<section class=\"ds-status\"><div><div class=\"ds-status-label\">CURRENT RISK</div><div class=\"ds-status-value\">LOW</div></div><div><div class=\"ds-status-context\">Live host monitoring</div><div class=\"ds-status-detail\">All resource measurements are real</div></div><span class=\"ds-status-tag\">MEASURED DATA</span></section>",
+      "css": ".ds-status { display: grid; grid-template-columns: 150px 1fr auto; gap: 1rem; align-items: center; padding: .72rem .85rem; border: 1px solid var(--line, #1b3437); border-radius: 7px; background: var(--surface, #091315); color: var(--text, #e6efed); font-family: \"Segoe UI Variable\", \"Segoe UI\", system-ui, sans-serif; } .ds-status-label { color: var(--quiet, #78908c); font-size: .66rem; font-weight: 700; letter-spacing: .085em; } .ds-status-value { margin-top: .14rem; color: var(--green, #58d39b); font-size: 1rem; font-weight: 720; } .ds-status-context { font-size: .86rem; font-weight: 630; } .ds-status-detail { margin-top: .12rem; color: var(--muted, #8da3a0); font-size: .76rem; } .ds-status-tag { padding: .32rem .58rem; border: 1px solid #285a47; border-radius: 999px; color: var(--green, #58d39b); font-size: .68rem; font-weight: 650; letter-spacing: .065em; white-space: nowrap; } .ds-status:focus-within { border-color: var(--green, #58d39b); } @media (max-width: 800px) { .ds-status { grid-template-columns: 1fr; gap: .8rem; } .ds-status-tag { width: fit-content; } }"
+    },
+    {
+      "name": "Telemetry Cell",
+      "kind": "card",
+      "refersTo": "telemetry-card",
+      "description": "Compact resource reading with a state-colored utilization track.",
+      "html": "<article class=\"ds-telemetry\"><div class=\"ds-telemetry-label\">CPU UTILIZATION</div><div class=\"ds-telemetry-value\">42.6%</div><div class=\"ds-telemetry-track\"><span></span></div></article>",
+      "css": ".ds-telemetry { min-width: 0; padding: .85rem .9rem; border: 1px solid var(--line, #1b3437); border-radius: 7px; background: var(--surface, #091315); font-family: \"Segoe UI Variable\", \"Segoe UI\", system-ui, sans-serif; } .ds-telemetry-label { color: var(--quiet, #78908c); font-size: .66rem; font-weight: 700; letter-spacing: .085em; } .ds-telemetry-value { margin: .42rem 0 .6rem; color: var(--text, #e6efed); font-size: 1.45rem; font-weight: 680; font-variant-numeric: tabular-nums; line-height: 1.1; } .ds-telemetry-track { height: 3px; overflow: hidden; background: #16282b; } .ds-telemetry-track span { display: block; width: 42.6%; height: 100%; background: var(--green, #58d39b); transition: width 240ms ease-out, background-color 160ms ease-out; } .ds-telemetry:hover { border-color: var(--line-strong, #285055); } .ds-telemetry:focus-within { outline: 2px solid var(--green, #58d39b); outline-offset: 2px; }"
+    },
+    {
+      "name": "Recovery Stage",
+      "kind": "card",
+      "refersTo": "recovery-stage",
+      "description": "One policy, execution, or verification step in the auditable recovery sequence.",
+      "html": "<article class=\"ds-recovery-stage\"><div class=\"ds-stage-step\">STEP 3</div><div class=\"ds-stage-title\">Verification</div><div class=\"ds-stage-value\">Successful</div><div class=\"ds-stage-detail\">Post-action check passed</div></article>",
+      "css": ".ds-recovery-stage { min-height: 132px; padding: .85rem; border: 1px solid var(--line, #1b3437); border-radius: 7px; background: #0b1b17; font-family: \"Segoe UI Variable\", \"Segoe UI\", system-ui, sans-serif; } .ds-stage-step { color: var(--quiet, #78908c); font-size: .66rem; font-weight: 700; letter-spacing: .085em; } .ds-stage-title { margin-top: .62rem; color: var(--muted, #8da3a0); font-size: .76rem; } .ds-stage-value { margin-top: .18rem; color: var(--text, #e6efed); font-size: 1rem; font-weight: 680; } .ds-stage-detail { margin-top: .45rem; color: var(--muted, #8da3a0); font-size: .76rem; line-height: 1.4; } .ds-recovery-stage:hover { border-color: var(--line-strong, #285055); } .ds-recovery-stage:focus-within { outline: 2px solid var(--green, #58d39b); outline-offset: 2px; }"
+    },
+    {
+      "name": "Source Tag",
+      "kind": "chip",
+      "refersTo": "source-tag",
+      "description": "A compact provenance label for measured or mixed operational data.",
+      "html": "<span class=\"ds-source-tag\" tabindex=\"0\">MEASURED DATA</span>",
+      "css": ".ds-source-tag { display: inline-block; padding: .32rem .58rem; border: 1px solid #285a47; border-radius: 999px; color: var(--green, #58d39b); background: transparent; font: 650 .68rem/1.2 \"Segoe UI Variable\", \"Segoe UI\", system-ui, sans-serif; letter-spacing: .065em; white-space: nowrap; } .ds-source-tag:hover { border-color: var(--green, #58d39b); } .ds-source-tag:focus-visible { outline: 2px solid var(--green, #58d39b); outline-offset: 2px; } .ds-source-tag:active { background: #0b1b17; }"
+    },
+    {
+      "name": "Console Tabs",
+      "kind": "nav",
+      "refersTo": "navigation-tabs",
+      "description": "Compact horizontal navigation for the seven operating views.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"ds-tab ds-tab-active\">Fleet overview</button><button class=\"ds-tab\">Detection</button><button class=\"ds-tab\">Recovery</button></nav>",
+      "css": ".ds-tabs { display: flex; gap: 0; overflow-x: auto; border-bottom: 1px solid var(--line, #1b3437); scrollbar-width: thin; } .ds-tab { min-height: 42px; padding: 0 .9rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted, #8da3a0); font: 400 .75rem/1.2 \"Segoe UI Variable\", \"Segoe UI\", system-ui, sans-serif; white-space: nowrap; } .ds-tab:hover { color: var(--text, #e6efed); background: #0a1516; } .ds-tab:focus-visible { outline: 2px solid var(--green, #58d39b); outline-offset: -2px; } .ds-tab:active, .ds-tab-active { border-bottom-color: var(--green, #58d39b); background: #0a1516; color: var(--green, #58d39b); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Resilience Control Room",
+    "overview": "DisasterOS feels like a purpose-built control room viewed during a long operating shift: low-glare, compact, calm under normal load, and unmistakable when conditions worsen. Near-black surfaces, precise separators, dense telemetry, and tabular numerals keep attention on evidence rather than decoration.\n\nThe interface is flat and operational. Green marks healthy state and primary action, blue appears only for comparative data, and amber or red communicates escalating risk. Generic AI gloss, decorative gradients, excessive rounding, and pictorial emoji are outside the visual language.",
+    "keyCharacteristics": [
+      "Deep navy-black canvas with restrained teal-toned surface layering.",
+      "Dense, scan-first telemetry with compact labels and tabular figures.",
+      "Semantic color that stays quiet until state or comparison requires it.",
+      "Fine borders and short transitions instead of shadows or ornamental effects.",
+      "Responsive reflow at 800px with motion reduced at the operating-system preference."
+    ],
+    "rules": [
+      { "name": "The Semantic Signal Rule", "body": "Green communicates health and primary action; blue is reserved for comparison; amber and red are reserved for escalating operational state.", "section": "colors" },
+      { "name": "The Low-Glare Rule", "body": "Large areas remain near-black or dark teal; bright colors appear on readings, state, focus, and compact controls rather than as decorative fields.", "section": "colors" },
+      { "name": "The Readings First Rule", "body": "Use tabular numerals for telemetry and metrics so changing values remain aligned and easy to compare.", "section": "typography" },
+      { "name": "The Compact Label Rule", "body": "Operational labels are small, uppercase, tracked, and subordinate to the value they identify.", "section": "typography" },
+      { "name": "The Flat Console Rule", "body": "Surfaces remain flat at rest and in interaction; use tonal layering and borders, never drop shadows, to establish hierarchy.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep the canvas deep navy-black and use fine teal structural lines to organize dense information.",
+      "Do reserve green for healthy state, focus, progress, active navigation, and primary action.",
+      "Do use blue only when a comparative data series needs separation from the green primary series.",
+      "Do present changing measurements with tabular numerals and compact uppercase labels.",
+      "Do preserve the 800px reflow and the reduced-motion override when extending the interface."
+    ],
+    "donts": [
+      "Don't add gradients, glows, glass effects, drop shadows, or decorative visual noise.",
+      "Don't use oversized type, inflated whitespace, or large rounded cards that dilute console density.",
+      "Don't use emojis or generic decorative icons as status communication.",
+      "Don't use amber or red decoratively; they are operational warnings.",
+      "Don't turn every datum into an isolated floating card when a shared instrument surface communicates the relationship more clearly."
+    ]
+  }
+}

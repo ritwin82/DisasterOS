@@ -3,3 +3,11 @@ address = "127.0.0.1"
 
 [browser]
 gatherUsageStats = false
+
+[theme]
+base = "dark"
+primaryColor = "#58d39b"
+backgroundColor = "#0B1120"
+secondaryBackgroundColor = "#091315"
+textColor = "#e6efed"
+font = "sans serif"

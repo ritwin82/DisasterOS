@@ -160,6 +160,15 @@ def stage_panel(step, title, value, detail, tone="neutral"):
             f'<div class="stage-detail">{safe[3]}</div></div>')
 
 
+def telemetry_panel(label, value, percent, tone="normal"):
+    safe_label = html.escape(str(label))
+    safe_value = html.escape(str(value))
+    width = min(max(float(percent), 0.0), 100.0)
+    return (f'<div class="telemetry-item {tone}"><div class="telemetry-label">{safe_label}</div>'
+            f'<div class="telemetry-value">{safe_value}</div><div class="telemetry-track">'
+            f'<span style="width:{width:.1f}%"></span></div></div>')
+
+
 SCENARIO_HELP = {
     "CPU overload": "Raises CPU pressure; recovery limits or stops only the owned worker.",
     "Memory pressure": "Raises memory pressure; allocation remains capped at 64 MB.",
@@ -174,63 +183,122 @@ st.set_page_config(page_title="DisasterOS | Resilience Console", layout="wide")
 st.markdown("""
 <style>
   :root {
-    --canvas: #07101d; --surface: #101c2e; --surface-raised: #14233a;
-    --line: #2a3c57; --text: #edf4ff; --muted: #a9bad1;
-    --teal: #45d5c3; --blue: #79aaff; --amber: #f3bd67;
-    --red: #ff7c86; --green: #69d6a0;
+    --canvas: #0b1120; --surface: #091315; --surface-raised: #0d1a1d;
+    --surface-hover: #112226; --line: #1b3437; --line-strong: #285055;
+    --text: #e6efed; --muted: #8da3a0; --quiet: #78908c;
+    --green: #58d39b; --blue: #69aeda; --amber: #e6ad4b; --red: #e56d72;
   }
+  * { box-sizing: border-box; }
+  html, body, [class*="css"] { font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif; }
   .stApp { background: var(--canvas); color: var(--text); }
-  [data-testid="stHeader"] { background: rgba(7,16,29,.94); }
-  .block-container { max-width: 1440px; padding-top: 2.2rem; padding-bottom: 4rem; }
-  h1, h2, h3 { color: var(--text) !important; letter-spacing: -.025em; }
-  h1 { font-size: clamp(2.25rem, 5vw, 4.25rem) !important; margin-bottom: .1rem !important; }
-  h2 { margin-top: 1.1rem !important; }
-  p, li { line-height: 1.55; }
-  ::selection { background: #45d5c344; color: var(--text); }
-  :focus-visible { outline: 3px solid var(--teal) !important; outline-offset: 3px !important; }
-  .product-description { color: var(--muted); max-width: 72ch; font-size: 1.02rem; margin-bottom: 1.5rem; }
-  .status-surface {
-    display: grid; grid-template-columns: minmax(180px,.75fr) 2fr auto; gap: 1.5rem;
-    align-items: center; background: var(--surface); border: 1px solid var(--line);
-    border-radius: 14px; padding: 1.25rem 1.4rem; margin: .8rem 0 1.4rem;
+  [data-testid="stHeader"] { background: var(--canvas); height: 2rem; }
+  [data-testid="stDecoration"] { display: none; }
+  .block-container { max-width: 1500px; padding: 3.25rem 1.6rem 4rem; }
+  h1, h2, h3 { color: var(--text) !important; letter-spacing: -.015em; }
+  h2 { font-size: 1.15rem !important; margin: 1.35rem 0 .15rem !important; font-weight: 650 !important; }
+  h3 { font-size: .98rem !important; margin-top: 1.2rem !important; }
+  p, li { line-height: 1.48; }
+  ::selection { background: #58d39b35; color: var(--text); }
+  input, textarea, [contenteditable="true"] { caret-color: var(--green); }
+  a { color: var(--green); text-decoration-thickness: 1px; text-underline-offset: .18em; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 2px solid var(--green) !important; outline-offset: 2px !important; }
+  .console-header {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem;
+    border-bottom: 1px solid var(--line-strong); padding: .2rem 0 1rem; margin-bottom: .9rem;
   }
-  .status-label, .stage-step { color: var(--muted); font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-  .status-value { font-size: 1.7rem; font-weight: 750; margin-top: .2rem; }
+  .console-brand { color: var(--text); font-size: 1.65rem; line-height: 1; font-weight: 720; letter-spacing: -.025em; }
+  .console-brand span { color: var(--green); }
+  .console-subtitle { color: var(--muted); font-size: .83rem; margin-top: .45rem; }
+  .console-meta { display: flex; gap: .45rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .console-meta span, .source-tag {
+    border: 1px solid var(--line); border-radius: 999px; padding: .32rem .58rem;
+    color: var(--muted); font-size: .68rem; font-weight: 650; letter-spacing: .065em; text-transform: uppercase;
+  }
+  .status-surface {
+    display: grid; grid-template-columns: 150px 1fr auto; gap: 1rem; align-items: center;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 7px;
+    padding: .72rem .85rem; margin: .6rem 0 .8rem;
+  }
+  .status-label, .stage-step, .telemetry-label { color: var(--quiet); font-size: .66rem; font-weight: 700; letter-spacing: .085em; text-transform: uppercase; }
+  .status-value { font-size: 1rem; font-weight: 720; margin-top: .14rem; letter-spacing: .02em; }
   .status-value.low { color: var(--green); } .status-value.medium { color: var(--amber); }
   .status-value.high, .status-value.critical { color: var(--red); }
-  .status-context { color: var(--text); font-weight: 650; }
-  .status-detail { color: var(--muted); margin-top: .2rem; }
-  .source-tag { border: 1px solid var(--line); border-radius: 999px; padding: .45rem .75rem; color: var(--muted); white-space: nowrap; }
-  div[data-testid="stMetric"] { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.1rem; }
-  div[data-testid="stMetricLabel"] { color: var(--muted); }
-  div[data-testid="stMetricValue"] { color: var(--text); font-variant-numeric: tabular-nums; }
-  .recovery-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; margin: .8rem 0 1.2rem; }
-  .recovery-stage { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1rem; min-height: 150px; }
-  .recovery-stage.success { border-color: #35765b; } .recovery-stage.warning { border-color: #7f6334; }
-  .recovery-stage.danger { border-color: #82434b; }
-  .stage-title { color: var(--muted); margin-top: .8rem; }
-  .stage-value { color: var(--text); font-size: 1.2rem; font-weight: 700; margin-top: .2rem; }
-  .stage-detail { color: var(--muted); margin-top: .55rem; font-size: .9rem; line-height: 1.4; }
-  [data-baseweb="tab-list"] { gap: .35rem; overflow-x: auto; scrollbar-width: thin; }
-  [data-baseweb="tab"] { min-height: 46px; white-space: nowrap; }
-  .stButton button { border-radius: 9px; min-height: 42px; border-color: #3a5272; }
-  .stButton button:hover { border-color: var(--teal); color: var(--text); }
-  [data-testid="stDataFrame"] { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-  hr { border-color: var(--line); }
+  .status-context { color: var(--text); font-size: .86rem; font-weight: 630; }
+  .status-detail { color: var(--muted); margin-top: .12rem; font-size: .76rem; }
+  .source-tag { white-space: nowrap; color: var(--green); border-color: #285a47; }
+  .telemetry-grid { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 7px; overflow: hidden; margin: .75rem 0; }
+  .telemetry-item { min-width: 0; background: var(--surface); padding: .85rem .9rem; border-right: 1px solid var(--line); }
+  .telemetry-item:last-child { border-right: 0; }
+  .telemetry-value { color: var(--text); font-size: 1.45rem; line-height: 1.1; font-weight: 680; margin: .42rem 0 .6rem; font-variant-numeric: tabular-nums; }
+  .telemetry-track { height: 3px; background: #16282b; overflow: hidden; }
+  .telemetry-track span { display: block; height: 100%; background: var(--green); transition: width 240ms ease-out, background-color 160ms ease-out; }
+  .telemetry-item.warn .telemetry-track span { background: var(--amber); }
+  .telemetry-item.danger .telemetry-track span { background: var(--red); }
+  .model-readiness {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .8rem 1.5rem; align-items: center;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: .8rem .9rem; margin: .75rem 0;
+  }
+  .readiness-title { color: var(--text); font-size: .9rem; font-weight: 680; margin-top: .16rem; }
+  .readiness-detail { color: var(--muted); font-size: .75rem; margin-top: .2rem; line-height: 1.4; }
+  .readiness-count { color: var(--text); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .readiness-count span { color: var(--quiet); font-size: .72rem; font-weight: 620; }
+  .readiness-track { grid-column: 1 / -1; height: 3px; background: var(--telemetry-track); overflow: hidden; }
+  .readiness-track span { display: block; height: 100%; background: var(--green); transition: width 240ms ease-out; }
+  div[data-testid="stMetric"] { background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: .72rem .8rem; box-shadow: none; }
+  div[data-testid="stMetricLabel"] { color: var(--muted); font-size: .72rem; }
+  div[data-testid="stMetricValue"] { color: var(--text); font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+  .recovery-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: .75rem 0 1rem; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+  .recovery-stage { background: var(--surface); border-right: 1px solid var(--line); padding: .85rem; min-height: 132px; }
+  .recovery-stage:last-child { border-right: 0; }
+  .recovery-stage.success { background: #0b1b17; } .recovery-stage.warning { background: #1c180e; }
+  .recovery-stage.danger { background: #1c1012; }
+  .stage-title { color: var(--muted); margin-top: .62rem; font-size: .76rem; }
+  .stage-value { color: var(--text); font-size: 1rem; font-weight: 680; margin-top: .18rem; }
+  .stage-detail { color: var(--muted); margin-top: .45rem; font-size: .76rem; line-height: 1.4; }
+  [data-baseweb="tab-list"] { gap: 0; overflow-x: auto; scrollbar-width: thin; border-bottom: 1px solid var(--line); }
+  [data-baseweb="tab"] { min-height: 42px; white-space: nowrap; padding: 0 .9rem; color: var(--muted); font-size: .75rem; }
+  button[role="tab"][aria-selected="true"], button[role="tab"][aria-selected="true"] p { color: var(--green) !important; background: #0a1516; }
+  [data-baseweb="tab-highlight"] { background-color: var(--green) !important; height: 2px; }
+  [data-testid="stVerticalBlockBorderWrapper"] { border-color: var(--line) !important; border-radius: 7px !important; background: var(--surface); }
+  .stButton button { border-radius: 5px; min-height: 38px; border: 1px solid var(--line-strong); background: #0e2022; color: var(--text); font-weight: 620; transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease; }
+  .stButton button:hover { border-color: var(--green); color: var(--green); background: var(--surface-hover); }
+  .stButton button[kind="primary"] { background: var(--green); border-color: var(--green); color: #04100c; font-weight: 720; }
+  .stButton button[kind="primary"]:hover { background: #70dfaa; border-color: #70dfaa; color: #04100c; }
+  .stButton button:disabled { opacity: .45; }
+  [data-testid="stDataFrame"] { border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+  [data-testid="stExpander"] { border: 1px solid var(--line) !important; border-radius: 7px !important; background: var(--surface); }
+  [data-testid="stAlert"] { border-radius: 6px; border-width: 1px; }
+  [data-testid="stProgress"] > div > div { background: var(--green); }
+  hr { border-color: var(--line); margin: 1rem 0; }
+  small, .stCaption { color: var(--muted) !important; }
+  * { scrollbar-color: var(--line-strong) var(--canvas); scrollbar-width: thin; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  }
   @media (max-width: 800px) {
-    .block-container { padding: 1.25rem .85rem 3rem; }
+    .block-container { padding: 3rem .75rem 3rem; }
+    .console-header { align-items: flex-start; flex-direction: column; gap: .8rem; }
+    .console-meta { justify-content: flex-start; width: 100%; }
     .status-surface { grid-template-columns: 1fr; gap: .8rem; }
     .source-tag { width: fit-content; }
+    .telemetry-grid { grid-template-columns: repeat(2, 1fr); }
+    .model-readiness { grid-template-columns: 1fr; gap: .6rem; }
+    .readiness-track { grid-column: 1; }
+    .telemetry-item:nth-child(2) { border-right: 0; }
+    .telemetry-item:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
     .recovery-flow { grid-template-columns: 1fr; }
+    .recovery-stage { border-right: 0; border-bottom: 1px solid var(--line); }
+    .recovery-stage:last-child { border-bottom: 0; }
   }
 </style>
 """, unsafe_allow_html=True)
 
 system = engine()
-st.title("DisasterOS")
-st.markdown('<div class="product-description">A local resilience console that monitors the host, explains risk, '
-            'recovers only managed workloads, verifies the outcome, and records an audit trail.</div>',
-            unsafe_allow_html=True)
+st.markdown('<header class="console-header"><div><div class="console-brand">Disaster<span>OS</span></div>'
+            '<div class="console-subtitle">Local resilience control plane for monitored and managed workloads</div></div>'
+            '<div class="console-meta"><span>Local environment</span><span>2 second telemetry</span>'
+            '<span>Bounded recovery</span></div></header>', unsafe_allow_html=True)
 
 
 @st.fragment(run_every="2s")
@@ -253,34 +321,39 @@ def dashboard():
         f'<div class="status-surface"><div><div class="status-label">Current risk</div>'
         f'<div class="status-value {status.lower()}">{html.escape(status)}</div></div>'
         f'<div><div class="status-context">{html.escape(context)}</div>'
-        f'<div class="status-detail">{html.escape(detail)} · {html.escape(system.backend.name.title())} backend</div></div>'
+        f'<div class="status-detail">{html.escape(detail)} · {html.escape(system.backend.name.title())} backend · last sample {html.escape(format_local_time(current.get("ts")))}</div></div>'
         f'<div class="source-tag">{html.escape(source)}</div></div>', unsafe_allow_html=True)
 
     overview, intelligence, simulator_tab, recovery_tab, platform_tab, benchmark_tab, events_tab = st.tabs(
-        ["Overview", "Intelligence", "Simulator", "Recovery", "Platform", "Benchmarks", "Activity"])
+        ["Fleet overview", "Detection", "Failure lab", "Recovery", "Infrastructure", "Benchmarks", "Audit log"])
 
     with overview:
-        st.subheader("Host resources")
-        st.caption("Live measurements refresh every two seconds. Scenario-modified fields are identified above.")
-        a, b, c, d = st.columns(4)
-        a.metric("CPU utilization", f'{current["cpu"]:.1f}%')
-        b.metric("Memory utilization", f'{current["ram"]:.1f}%')
-        c.metric("Disk utilization", f'{current["disk"]:.1f}%')
-        d.metric("Memory available", f'{current["available_mb"] / 1024:.1f} GB')
+        st.subheader("Host telemetry")
+        st.caption("Measured utilization, refreshed every two seconds. Scenario-modified fields remain identified in the status bar.")
+        def resource_tone(value):
+            return "danger" if value >= 90 else "warn" if value >= 75 else "normal"
+        telemetry = "".join([
+            telemetry_panel("CPU utilization", f'{current["cpu"]:.1f}%', current["cpu"], resource_tone(current["cpu"])),
+            telemetry_panel("Memory utilization", f'{current["ram"]:.1f}%', current["ram"], resource_tone(current["ram"])),
+            telemetry_panel("Disk utilization", f'{current["disk"]:.1f}%', current["disk"], resource_tone(current["disk"])),
+            telemetry_panel("Swap utilization", f'{current["swap"]:.1f}%', current["swap"], resource_tone(current["swap"])),
+        ])
+        st.markdown(f'<div class="telemetry-grid">{telemetry}</div>', unsafe_allow_html=True)
         e, f, g = st.columns(3)
-        e.metric("Swap utilization", f'{current["swap"]:.1f}%')
-        f.metric("Network upload", f'{current["network_up"]:.1f} KB/s')
-        g.metric("Network download", f'{current["network_down"]:.1f} KB/s')
+        e.metric("Available memory", f'{current["available_mb"] / 1024:.1f} GB')
+        f.metric("Outbound rate", f'{current["network_up"]:.1f} KB/s')
+        g.metric("Inbound rate", f'{current["network_down"]:.1f} KB/s')
         if history:
             frame = pd.DataFrame(history)
             fig = go.Figure()
-            for key, label, color in [("cpu", "CPU", "#45d5c3"), ("ram", "Memory", "#79aaff"), ("disk", "Disk", "#f3bd67")]:
+            for key, label, color in [("cpu", "CPU", "#58d39b"), ("ram", "Memory", "#69aeda"), ("disk", "Disk", "#e6ad4b")]:
                 fig.add_trace(go.Scatter(x=frame["ts"], y=frame[key], mode="lines", name=label,
-                                         line={"color": color, "width": 2}))
-            fig.update_layout(template="plotly_dark", paper_bgcolor="#101c2e", plot_bgcolor="#101c2e",
-                              yaxis={"range": [0, 100], "title": "Utilization (%)", "gridcolor": "#2a3c57"},
-                              xaxis={"gridcolor": "#1a2b42"}, height=330,
-                              margin={"l": 20, "r": 20, "t": 30, "b": 20}, legend={"orientation": "h"})
+                                         line={"color": color, "width": 1.6}))
+            fig.update_layout(template="plotly_dark", paper_bgcolor="#091315", plot_bgcolor="#091315",
+                              yaxis={"range": [0, 100], "title": "Utilization (%)", "gridcolor": "#173033", "zeroline": False},
+                              xaxis={"gridcolor": "#102326", "zeroline": False}, height=310,
+                              font={"family": "IBM Plex Sans, Segoe UI, sans-serif", "color": "#8da3a0", "size": 11},
+                              margin={"l": 20, "r": 20, "t": 28, "b": 20}, legend={"orientation": "h", "y": 1.12})
             st.plotly_chart(fig, width="stretch")
         st.caption("Network values are rates calculated from counter differences, not cumulative totals.")
 
@@ -289,13 +362,30 @@ def dashboard():
         anomaly = snap["anomaly"]
         a, b, c = st.columns(3)
         a.metric("Anomaly detector", anomaly["status"])
-        b.metric("Isolation Forest score", "Learning" if anomaly["score"] is None else f'{anomaly["score"]:.3f}')
+        b.metric("Anomaly score", "Learning" if anomaly["score"] is None else f'{anomaly["score"]:.3f}')
         c.metric("Overall risk", status)
         samples = anomaly["samples"]
         required = anomaly["required_samples"]
-        st.progress(min(samples / required, 1.0), text=f"Clean real baseline samples: {samples}/{required}")
+        readiness_pct = min((samples / required) * 100, 100) if required else 100
+        remaining = max(required - samples, 0)
+        readiness_title = "Ready for anomaly scoring" if not remaining else "Learning normal system behavior"
+        readiness_detail = (
+            "The model has enough live observations to identify unusual behavior. Simulated scenarios remain excluded from training."
+            if not remaining else
+            f"{remaining} more live observation{'s' if remaining != 1 else ''} needed. Simulated scenarios are evaluated but never included in training."
+        )
+        st.markdown(
+            '<section class="model-readiness" aria-label="Detector readiness">'
+            '<div><div class="telemetry-label">Detector readiness</div>'
+            f'<div class="readiness-title">{readiness_title}</div>'
+            f'<div class="readiness-detail">{readiness_detail}</div></div>'
+            f'<div class="readiness-count">{samples}<span> / {required} live observations</span></div>'
+            f'<div class="readiness-track" aria-hidden="true"><span style="width:{readiness_pct:.1f}%"></span></div>'
+            '</section>',
+            unsafe_allow_html=True,
+        )
         if samples < required:
-            st.info(f"The detector needs {required - samples} more clean real sample(s) before anomaly scoring begins. Simulations are scored but never used for training.")
+            st.caption("Anomaly scoring starts automatically when the operating baseline is ready.")
         else:
             threshold = anomaly.get("threshold")
             threshold_text = "—" if threshold is None else f"{threshold:.3f}"
@@ -320,8 +410,8 @@ def dashboard():
         st.caption(snap["risk"]["method"])
 
     with simulator_tab:
-        st.subheader("Run a controlled failure")
-        st.caption("Every scenario is bounded to application-owned processes. The host network and user files are never changed.")
+        st.subheader("Controlled failure lab")
+        st.caption("Inject a bounded condition, observe the policy decision, and verify recovery. Host networking and user files are never modified.")
         busy = system.benchmarker.running
         if busy:
             st.info("A benchmark suite is running. Scenario controls will unlock when all trials finish.")
@@ -329,15 +419,16 @@ def dashboard():
             cols = st.columns(3)
             for col, name in zip(cols, row):
                 with col:
-                    st.markdown(f"**{name}**")
-                    st.caption(SCENARIO_HELP[name])
-                    if st.button(f"Start {name}", key=f"scenario_{name}", width="stretch", disabled=busy):
-                        try:
-                            system.start(name)
-                            st.toast(f"{name} started")
-                            st.rerun(scope="fragment")
-                        except Exception as exc:
-                            st.error(f"Could not start {name}: {exc}")
+                    with st.container(border=True):
+                        st.markdown(f"**{name}**")
+                        st.caption(SCENARIO_HELP[name])
+                        if st.button(f"Start {name}", key=f"scenario_{name}", width="stretch", disabled=busy):
+                            try:
+                                system.start(name)
+                                st.toast(f"{name} started")
+                                st.rerun(scope="fragment")
+                            except Exception as exc:
+                                st.error(f"Could not start {name}: {exc}")
         st.divider()
         a, b, c = st.columns([1, 1, 1])
         a.metric("Active scenario", scenario or "None")
@@ -346,11 +437,11 @@ def dashboard():
         if st.button("Stop active simulation", type="primary", disabled=busy or not scenario):
             system.stop()
             st.rerun(scope="fragment")
-        st.caption("CPU and memory workers run for at most 25 seconds and allocate at most 64 MB.")
+        st.caption("Safety envelope: CPU and memory workers stop after 25 seconds; memory allocation is capped at 64 MB.")
 
     with recovery_tab:
-        st.subheader("Recovery flow")
-        st.caption("Read left to right: the policy chooses an allowlisted response, executes it, then checks the result.")
+        st.subheader("Recovery control loop")
+        st.caption("Policy selection, bounded execution, and post-action verification are shown as one auditable sequence.")
         decision = snap["decision"]
         action = snap["action"]
         episode_action = action["action"] if action else decision["action"]
@@ -439,7 +530,7 @@ def dashboard():
             st.error(f"Capability inspection failed: {exc}")
 
     with benchmark_tab:
-        st.subheader("Repeated recovery benchmark")
+        st.subheader("Recovery benchmark")
         st.caption("Runs matched service-crash trials with recovery disabled and enabled. Trial order alternates to reduce warm-up bias.")
         trial_count = st.slider("Comparison repetitions", 3, 10, BENCHMARK_TRIALS,
                                 help="Each repetition contains one recovery-disabled run and one recovery-enabled run.",
@@ -484,9 +575,10 @@ def dashboard():
                                          "Success rate (%)", "False positives", "Missed detections"]
                     st.dataframe(aggregate, hide_index=True, width="stretch")
                     fig = go.Figure(go.Bar(x=aggregate["Mode"], y=aggregate["Mean availability (%)"],
-                                           marker_color=["#f3bd67", "#45d5c3"]))
-                    fig.update_layout(template="plotly_dark", paper_bgcolor="#101c2e", plot_bgcolor="#101c2e",
-                                      yaxis={"range": [0, 100], "title": "Mean observed availability (%)", "gridcolor": "#2a3c57"},
+                                           marker_color=["#e6ad4b", "#58d39b"]))
+                    fig.update_layout(template="plotly_dark", paper_bgcolor="#091315", plot_bgcolor="#091315",
+                                      font={"family": "IBM Plex Sans, Segoe UI, sans-serif", "color": "#8da3a0", "size": 11},
+                                      yaxis={"range": [0, 100], "title": "Mean observed availability (%)", "gridcolor": "#173033", "zeroline": False},
                                       height=290, margin={"l": 20, "r": 20, "t": 20, "b": 20}, showlegend=False)
                     st.plotly_chart(fig, width="stretch")
                 display = table[["ts", "batch_id", "trial_number", "recovery_enabled", "detection_latency_ms", "recovery_latency_ms",
