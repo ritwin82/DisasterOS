@@ -78,13 +78,13 @@ Only an explicitly configured `disasteros-*.service` **user unit** can be restar
 
 ### Both platforms
 
-1. Leave the **System Overview** open for about 40 seconds. Isolation Forest needs 20 real baseline observations; simulated readings never train it.
+1. Open **Intelligence** and watch the baseline status. Isolation Forest uses 500 clean real observations (about 17 minutes on a new database), then saves the calibrated model so later launches can load it immediately. Existing clean database history is reused; simulated readings are scored but never train it.
 2. Select **Service crash**. The app stops only its own demo service, decides to restart it, verifies its process is running, and records the result.
 3. Select **CPU overload** or **Memory pressure**. A child process runs for at most 25 seconds with at most 64 MB allocated. The dashboard clearly labels injected pressure fields. Windows stops and verifies the owned worker; Linux applies and verifies a CPU or memory limit when cgroup delegation is available, otherwise it stops the worker.
 4. Select **Network failure**. Only the test dependency becomes unavailable; recovery enables simulated offline mode. The host network stays connected.
 5. Select **Disk pressure**. The policy records a storage recommendation as `UNVERIFIED` and deletes nothing.
 6. Use **Stop simulation** to clean up the active worker.
-7. Open **Benchmarks** and run the service-crash comparison. It performs measured recovery-disabled and recovery-enabled trials, persists both, and charts observed availability. No results are prefilled.
+7. Open **Benchmarks**, choose 3–10 repetitions, and run the suite. Each repetition measures recovery-disabled and recovery-enabled trials; order alternates, every raw result is persisted, and the dashboard reports median/p95 latency, success rate, and mean availability. No results are prefilled.
 
 ### Linux extras
 
@@ -92,12 +92,12 @@ The **Platform** tab shows cgroup and user-systemd capabilities. With a delegate
 
 ## Design and limits
 
-- `monitoring.py`, `feature_engineering.py`, `anomaly_detector.py`, `risk_engine.py`: shared measurements and intelligence. Network throughput uses counter differences over elapsed time. Risk categories are transparent rule-based estimates; Isolation Forest detects unusual behavior, not validated failure probabilities.
+- `monitoring.py`, `feature_engineering.py`, `anomaly_detector.py`, `risk_engine.py`: shared measurements and intelligence. Network throughput uses counter differences over elapsed time. The anomaly model combines current CPU/RAM/swap/disk values with rolling means, variability, and deltas; it uses a time-ordered calibration holdout and persists its model metadata. Risk categories are transparent rule-based estimates; Isolation Forest detects unusual behavior, not validated failure probabilities.
 - `platform_backends/`: typed action results, owned workload inspection, host-matched backend selection, Windows recovery, and Linux cgroup/systemd operations.
 - `recovery_engine.py`: allowlisted policy decisions, dry-run mode, cooldowns, bounded retries, post-action checks, and audit events.
 - `disaster_simulator.py`, `workload.py`: controlled scenarios and application-owned child processes.
 - `database.py`: backward-compatible SQLite migration. Existing `metrics` and `events` records are retained; new source labels and benchmark records are added.
-- `benchmarking.py`: measured service-crash trials. Detection and recovery timestamps are recorded from the running monitor. Availability is the fraction of observed samples with the managed service running during each trial.
+- `benchmarking.py`: repeated, measured service-crash trials. Detection and recovery timestamps are recorded from the running monitor with a monotonic clock. Availability is the fraction of observed samples with the managed service running during each trial; aggregate results retain failures and report typical and tail performance.
 - `app.py`: Streamlit presentation and background monitoring; the dashboard stays responsive during benchmarks.
 
 The SQLite file is `disasteros.db`. Host metrics are real; injected scenario fields are identified individually in the dashboard and database. The system never terminates arbitrary host processes, disconnects host networking, deletes user files, or executes model-generated commands. Linux cgroup/systemd support depends on the actual WSL environment and permissions; a capability report is authoritative. The benchmark covers the managed demo-service crash scenario only and does not establish general resilience improvement.

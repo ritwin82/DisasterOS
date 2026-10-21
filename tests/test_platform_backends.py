@@ -25,7 +25,7 @@ def test_windows_capabilities_are_explicit():
 
 
 def test_normalized_metric_schema_handles_missing_optional_features():
-    assert feature_vector({"cpu": 20, "ram": 30}) == [20, 30, 0, 0]
+    assert feature_vector({"cpu": 20, "ram": 30}) == [20, 30, 0, 0, 20, 0, 0, 30, 0, 0, 0, 0]
     assert normalize_metrics({"cpu": 20, "ram": 30})["network_up"] is None
     with pytest.raises(ValueError):
         feature_vector({"cpu": 101})

@@ -2,7 +2,7 @@ import sqlite3
 from types import SimpleNamespace
 
 import monitoring
-from benchmarking import latency_ms
+from benchmarking import latency_ms, summarize_benchmark_rows
 from database import Database
 
 
@@ -49,7 +49,24 @@ def test_benchmark_latency_and_persistence(tmp_path):
     db.benchmark({"ts": "2026-01-01", "scenario": "Service crash", "recovery_enabled": 1,
                   "success": 1, "false_positives": 0, "missed_detections": 0})
     assert db.benchmarks()[0]["success"] == 1
-    assert db.benchmarks()[0]["method_version"] == 2
+    assert db.benchmarks()[0]["method_version"] == 3
+
+
+def test_repeated_benchmark_summary_reports_median_p95_and_failures():
+    rows = [
+        {"recovery_enabled": 1, "detection_latency_ms": 100, "recovery_latency_ms": 200,
+         "availability_percent": 90, "success": 1, "false_positives": 0, "missed_detections": 0},
+        {"recovery_enabled": 1, "detection_latency_ms": 300, "recovery_latency_ms": None,
+         "availability_percent": 50, "success": 0, "false_positives": 1, "missed_detections": 1},
+        {"recovery_enabled": 0, "detection_latency_ms": 150, "recovery_latency_ms": None,
+         "availability_percent": 20, "success": 0, "false_positives": 0, "missed_detections": 0},
+    ]
+    summary = summarize_benchmark_rows(rows)
+    assert summary[True]["detection_median_ms"] == 200
+    assert summary[True]["detection_p95_ms"] == 290
+    assert summary[True]["success_rate"] == 50
+    assert summary[True]["missed_detections"] == 1
+    assert summary[False]["availability_mean"] == 20
 
 
 def test_benchmark_method_migration_marks_older_rows(tmp_path):

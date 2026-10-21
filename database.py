@@ -30,7 +30,8 @@ class Database:
                     recovery_latency_ms REAL, availability_percent REAL,
                     success INTEGER NOT NULL, false_positives INTEGER NOT NULL,
                     missed_detections INTEGER NOT NULL, details TEXT,
-                    method_version INTEGER NOT NULL DEFAULT 2
+                    method_version INTEGER NOT NULL DEFAULT 3,
+                    batch_id TEXT, trial_number INTEGER, trial_count INTEGER
                 );
             """)
             existing = {row[1] for row in db.execute("PRAGMA table_info(metrics)")}
@@ -44,6 +45,13 @@ class Database:
             benchmark_columns = {row[1] for row in db.execute("PRAGMA table_info(benchmarks)")}
             if "method_version" not in benchmark_columns:
                 db.execute("ALTER TABLE benchmarks ADD COLUMN method_version INTEGER NOT NULL DEFAULT 1")
+            for name, definition in {
+                "batch_id": "TEXT",
+                "trial_number": "INTEGER",
+                "trial_count": "INTEGER",
+            }.items():
+                if name not in benchmark_columns:
+                    db.execute(f"ALTER TABLE benchmarks ADD COLUMN {name} {definition}")
 
     def _connect(self):
         db = sqlite3.connect(self.path, timeout=5)
@@ -72,12 +80,22 @@ class Database:
             rows = db.execute("SELECT * FROM metrics ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
             return [dict(row) for row in reversed(rows)]
 
+    def clean_metrics(self, limit=500):
+        """Return oldest-to-newest observations safe for anomaly-model training."""
+        with self._connect() as db:
+            rows = db.execute("""SELECT * FROM metrics
+                WHERE simulated = 0 AND COALESCE(measurement_source, 'real') = 'real'
+                  AND cpu IS NOT NULL AND ram IS NOT NULL AND swap IS NOT NULL AND disk IS NOT NULL
+                ORDER BY id DESC LIMIT ?""", (limit,)).fetchall()
+            return [dict(row) for row in reversed(rows)]
+
     def benchmark(self, row):
         columns = ("ts", "scenario", "recovery_enabled", "fault_ts", "detection_ts", "action_ts", "verified_ts",
                    "detection_latency_ms", "recovery_latency_ms", "availability_percent", "success",
-                   "false_positives", "missed_detections", "details", "method_version")
+                   "false_positives", "missed_detections", "details", "method_version",
+                   "batch_id", "trial_number", "trial_count")
         with self._connect() as db:
-            values = [json.dumps(row.get(key)) if key == "details" else row.get(key, 2) if key == "method_version" else row.get(key) for key in columns]
+            values = [json.dumps(row.get(key)) if key == "details" else row.get(key, 3) if key == "method_version" else row.get(key) for key in columns]
             db.execute(f"INSERT INTO benchmarks ({','.join(columns)}) VALUES ({','.join('?' for _ in columns)})", values)
 
     def benchmarks(self, limit=50):

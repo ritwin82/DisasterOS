@@ -11,8 +11,9 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from anomaly_detector import AnomalyDetector
-from benchmarking import BenchmarkRunner
-from config import HISTORY_LIMIT, SAMPLE_SECONDS, SCENARIOS
+from benchmarking import BenchmarkRunner, summarize_benchmark_rows
+from config import (BASELINE_SAMPLES, BENCHMARK_TRIALS, HISTORY_LIMIT,
+                    MODEL_PATH, SAMPLE_SECONDS, SCENARIOS)
 from database import Database
 from disaster_simulator import DisasterSimulator
 from platform_backends.factory import create_backend
@@ -23,7 +24,8 @@ from risk_engine import RiskEngine
 class DisasterOS:
     def __init__(self):
         self.db = Database()
-        self.detector = AnomalyDetector()
+        self.detector = AnomalyDetector(model_path=MODEL_PATH)
+        self.detector.bootstrap(self.db.clean_metrics(BASELINE_SAMPLES))
         self.risk_engine = RiskEngine()
         self.simulator = DisasterSimulator(self.db)
         self.backend = create_backend(self.simulator)
@@ -48,7 +50,7 @@ class DisasterOS:
                 if self.simulator.worker is None and hasattr(self.backend, "cleanup_managed_resources"):
                     self.backend.cleanup_managed_resources()
                 observed["worker_alive"] = self.simulator.worker is not None and self.simulator.worker.poll() is None
-                anomaly = self.detector.assess(real, simulated=observed["simulated"])
+                anomaly = self.detector.assess(real, simulated=observed["simulated"], score_sample=observed)
                 risk = self.risk_engine.assess(observed, anomaly)
                 systemd_info = (self.backend.inspect_workload("systemd_test_service")
                                 if self.backend.name == "linux" and self.backend.systemd_service else None)
@@ -290,11 +292,25 @@ def dashboard():
         b.metric("Isolation Forest score", "Learning" if anomaly["score"] is None else f'{anomaly["score"]:.3f}')
         c.metric("Overall risk", status)
         samples = anomaly["samples"]
-        st.progress(min(samples / 20, 1.0), text=f"Real baseline samples: {samples}/20")
-        if samples < 20:
-            st.info(f"The detector needs {20 - samples} more real sample(s) before anomaly scoring begins. Simulations do not train it.")
+        required = anomaly["required_samples"]
+        st.progress(min(samples / required, 1.0), text=f"Clean real baseline samples: {samples}/{required}")
+        if samples < required:
+            st.info(f"The detector needs {required - samples} more clean real sample(s) before anomaly scoring begins. Simulations are scored but never used for training.")
         else:
-            st.caption("A negative score is unusual relative to this session's baseline. It is not a failure probability.")
+            threshold = anomaly.get("threshold")
+            threshold_text = "—" if threshold is None else f"{threshold:.3f}"
+            st.caption(f"Model v{anomaly['model_version']} · {anomaly.get('algorithm', 'Anomaly model')} · {anomaly['feature_count']} features · calibrated threshold {threshold_text} · source: {anomaly['model_source']}. A lower-than-threshold score is unusual; it is not a failure probability.")
+            with st.expander("Model training details"):
+                calibrated_rate = anomaly.get("calibration_false_positive_rate")
+                st.markdown(
+                    f"- Trained: {format_local_time(anomaly.get('trained_at'))}\n"
+                    f"- Time-ordered training samples: {anomaly.get('train_count', '—')}\n"
+                    f"- Later calibration samples: {anomaly.get('calibration_count', '—')}\n"
+                    f"- Calibration false-positive rate: {'—' if calibrated_rate is None else f'{100 * calibrated_rate:.1f}%'}\n"
+                    "- Simulated observations can be scored, but cannot change the saved model."
+                )
+                if anomaly.get("backend_note"):
+                    st.info("Portable ML fallback is active because the scikit-learn native backend is unavailable on this machine.")
         st.subheader("Why the risk has this level")
         cols = st.columns(3)
         for col, (name, level) in zip(cols, snap["risk"]["resources"].items()):
@@ -308,7 +324,7 @@ def dashboard():
         st.caption("Every scenario is bounded to application-owned processes. The host network and user files are never changed.")
         busy = system.benchmarker.running
         if busy:
-            st.info("A benchmark is running. Scenario controls will unlock when both trials finish.")
+            st.info("A benchmark suite is running. Scenario controls will unlock when all trials finish.")
         for row in (SCENARIOS[:3], SCENARIOS[3:]):
             cols = st.columns(3)
             for col, name in zip(cols, row):
@@ -423,54 +439,74 @@ def dashboard():
             st.error(f"Capability inspection failed: {exc}")
 
     with benchmark_tab:
-        st.subheader("Recovery comparison")
-        st.caption("Runs the same managed service crash twice: first without automated recovery, then with it enabled.")
-        if st.button("Run service-crash comparison", disabled=system.benchmarker.running):
-            system.benchmarker.start_pair()
+        st.subheader("Repeated recovery benchmark")
+        st.caption("Runs matched service-crash trials with recovery disabled and enabled. Trial order alternates to reduce warm-up bias.")
+        trial_count = st.slider("Comparison repetitions", 3, 10, BENCHMARK_TRIALS,
+                                help="Each repetition contains one recovery-disabled run and one recovery-enabled run.",
+                                disabled=system.benchmarker.running)
+        if st.button("Run benchmark suite", disabled=system.benchmarker.running):
+            system.benchmarker.start_suite(trial_count)
             st.rerun(scope="fragment")
         if system.benchmarker.running:
-            st.info("Benchmark running in the background. This usually takes about 10 seconds.")
+            st.progress(system.benchmarker.progress,
+                        text=f"Completed {system.benchmarker.completed_runs} of {system.benchmarker.total_runs} runs")
+            st.info("Benchmark running in the background. Five repetitions usually take about 45–60 seconds.")
         if system.benchmarker.error:
             st.error(f"Benchmark failed: {system.benchmarker.error}")
         try:
-            runs = system.db.benchmarks(50)
+            runs = system.db.benchmarks(200)
             if runs:
                 table = pd.DataFrame(runs)
-                latest_v2 = table[table["method_version"] >= 2]
-                enabled_rows = latest_v2[latest_v2["recovery_enabled"] == 1]
-                disabled_rows = latest_v2[latest_v2["recovery_enabled"] == 0]
-                if not enabled_rows.empty and not disabled_rows.empty:
-                    enabled = enabled_rows.iloc[0]
-                    disabled = disabled_rows.iloc[0]
-                    a, b, c = st.columns(3)
-                    a.metric("Detection latency", format_duration_ms(enabled["detection_latency_ms"]))
-                    b.metric("Verified recovery latency", format_duration_ms(enabled["recovery_latency_ms"]))
-                    c.metric("Availability with recovery", f'{enabled["availability_percent"]:.1f}%')
-                    st.caption(f'Latest disabled trial availability: {disabled["availability_percent"]:.1f}%. Latencies are measured with a monotonic clock; displayed timestamps are local time.')
-                display = table[["ts", "recovery_enabled", "detection_latency_ms", "recovery_latency_ms",
+                current = table[(table["method_version"] >= 3) & table["batch_id"].notna()]
+                latest_batch = None if current.empty else current.iloc[0]["batch_id"]
+                latest = current[current["batch_id"] == latest_batch] if latest_batch else pd.DataFrame()
+                summary = summarize_benchmark_rows(latest.to_dict("records")) if not latest.empty else {}
+                if True in summary and False in summary:
+                    enabled, disabled = summary[True], summary[False]
+                    a, b, c, d = st.columns(4)
+                    a.metric("Median detection", format_duration_ms(enabled["detection_median_ms"]),
+                             help="Middle enabled-run detection latency; less sensitive to one slow run.")
+                    b.metric("P95 recovery", format_duration_ms(enabled["recovery_p95_ms"]),
+                             help="95th-percentile fault-to-verified latency; highlights tail performance.")
+                    c.metric("Recovery success", f'{enabled["success_rate"]:.0f}%')
+                    d.metric("Mean availability", f'{enabled["availability_mean"]:.1f}%')
+                    delta = enabled["availability_mean"] - disabled["availability_mean"]
+                    st.caption(f"Latest batch: {enabled['runs']} enabled + {disabled['runs']} disabled runs. Recovery changed mean observed availability by {delta:+.1f} percentage points. Timing uses a monotonic clock.")
+                    aggregate = pd.DataFrame([
+                        {"Mode": "Recovery disabled", **disabled},
+                        {"Mode": "Recovery enabled", **enabled},
+                    ])
+                    aggregate = aggregate[["Mode", "runs", "detection_median_ms", "detection_p95_ms",
+                                           "recovery_median_ms", "recovery_p95_ms", "availability_mean",
+                                           "success_rate", "false_positives", "missed_detections"]]
+                    aggregate.columns = ["Mode", "Runs", "Detection median (ms)", "Detection p95 (ms)",
+                                         "Recovery median (ms)", "Recovery p95 (ms)", "Mean availability (%)",
+                                         "Success rate (%)", "False positives", "Missed detections"]
+                    st.dataframe(aggregate, hide_index=True, width="stretch")
+                    fig = go.Figure(go.Bar(x=aggregate["Mode"], y=aggregate["Mean availability (%)"],
+                                           marker_color=["#f3bd67", "#45d5c3"]))
+                    fig.update_layout(template="plotly_dark", paper_bgcolor="#101c2e", plot_bgcolor="#101c2e",
+                                      yaxis={"range": [0, 100], "title": "Mean observed availability (%)", "gridcolor": "#2a3c57"},
+                                      height=290, margin={"l": 20, "r": 20, "t": 20, "b": 20}, showlegend=False)
+                    st.plotly_chart(fig, width="stretch")
+                display = table[["ts", "batch_id", "trial_number", "recovery_enabled", "detection_latency_ms", "recovery_latency_ms",
                                  "availability_percent", "success", "false_positives", "missed_detections", "method_version"]].copy()
                 display["ts"] = display["ts"].map(format_local_time)
                 display["recovery_enabled"] = display["recovery_enabled"].map({1: "Enabled", 0: "Disabled"})
                 display["detection_latency_ms"] = display["detection_latency_ms"].map(format_duration_ms)
                 display["recovery_latency_ms"] = display["recovery_latency_ms"].map(format_duration_ms)
                 display["success"] = display["success"].map({1: "Verified", 0: "Not recovered"})
-                display.columns = ["Run time", "Recovery", "Detection latency", "Fault → verified", "Availability %",
+                display["batch_id"] = display["batch_id"].map(lambda value: "Legacy" if pd.isna(value) else str(value)[:8])
+                display.columns = ["Run time", "Batch", "Trial", "Recovery", "Detection latency", "Fault → verified", "Availability %",
                                    "Outcome", "False positives", "Missed detections", "Method"]
-                st.dataframe(display, hide_index=True, width="stretch")
-                chart = latest_v2.dropna(subset=["availability_percent"]).copy()
-                if not chart.empty:
-                    fig = go.Figure(go.Bar(x=["Recovery enabled" if value else "Recovery disabled" for value in chart["recovery_enabled"]],
-                                           y=chart["availability_percent"], marker_color="#45d5c3"))
-                    fig.update_layout(template="plotly_dark", paper_bgcolor="#101c2e", plot_bgcolor="#101c2e",
-                                      yaxis={"range": [0, 100], "title": "Observed availability (%)", "gridcolor": "#2a3c57"},
-                                      height=290, margin={"l": 20, "r": 20, "t": 20, "b": 20})
-                    st.plotly_chart(fig, width="stretch")
-                if (table["method_version"] < 2).any():
-                    st.caption("Older method 1 rows are retained for audit history but excluded from the chart.")
+                with st.expander("Raw trial measurements"):
+                    st.dataframe(display, hide_index=True, width="stretch")
+                if (table["method_version"] < 3).any():
+                    st.caption("Older method 1–2 rows are retained for audit history but excluded from repeated-trial aggregates.")
                 with st.expander("How timing and availability are calculated"):
-                    st.markdown("**Detection latency** runs from fault injection to the policy decision. **Fault → verified** runs from injection to the completed health check. Both use `time.monotonic()` so clock changes cannot distort elapsed time. Availability is the share of unique monitor observations where the managed service is running, including the injected fault state.")
+                    st.markdown("**Detection latency** runs from fault injection to the policy decision. **Fault → verified** runs from injection to the completed health check. Both use `time.monotonic()` so clock changes cannot distort elapsed time. Availability is the share of unique monitor observations where the managed service is running, including the injected fault state. The median represents typical behavior; p95 exposes slow-tail behavior; success rate includes failed recoveries instead of silently dropping them.")
             else:
-                st.info("No benchmark results yet. Run the comparison to create the first measured pair.")
+                st.info("No benchmark results yet. Run a suite to create measured repeated trials.")
         except Exception as exc:
             st.error(f"Could not read benchmark results: {exc}")
 
